@@ -5,7 +5,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
-
+#include <map>
 // Our project headers
 #include "CipherMode.hpp"
 
@@ -47,6 +47,12 @@ class PlayfairCipher {
     private:
         
         std::string key_ = {""};
+        using Str2CoordMap = std::map< char, std::vector<int> >;
+        Str2CoordMap mymap;
+   
+        using Coord2StrMap = std::map< std::vector<int>, char >;
+        Coord2StrMap myrevmap;
+
         const std::vector<char> alphabet_ = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'};
         const std::vector<char>::size_type alphabetSize_ = alphabet_.size();
 
