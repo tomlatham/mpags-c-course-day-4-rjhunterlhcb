@@ -4,35 +4,26 @@
 #include <vector>
 #include <algorithm>
 #include <iterator>
+#include <map>
+
 // Out project headers
 #include "PlayfairCipher.hpp"
 
 PlayfairCipher::PlayfairCipher( const std::string& key )
   : key_{""}
 {
-//    std::cout << key_ << std::endl;
       setKey(key);
-  //  std::cout << key_ << std::endl;
 }
 
-//PlayfairCipher::PlayfairCipher( ) {}
 
 void PlayfairCipher::setKey ( const std::string& key) 
 {
     // store the original key
     key_ = key;
 
-    // Append the alphabet: loop over the alphabet, then nested loop over the key. If the letter isn't present, then append it to the end of the key. 
-    
-    for ( size_t j {0}; j<alphabetSize_; ++j ) {
-      //  for ( size_t i {0}; i<key_.size(); ++i ) {
-        //    std::size_t found {key_.find(alphabet_[j])}; 
-          //  if (found==std::string::npos) { 
-                     key_.push_back(alphabet_[j]);    
-           // }
-          
-       // }
-
+    // Append the alphabet
+    for ( auto letter : alphabet_ ) {
+        key_.push_back(letter);
     }
 
     // Use std::transform with the ::toupper function to capitalize
@@ -40,12 +31,9 @@ void PlayfairCipher::setKey ( const std::string& key)
     std::transform( key_.begin(), key_.end(), std::back_inserter(newKey),  ::toupper );
     key_ = newKey;
 
-    //std::cout << key_ << std::endl; 
-
     // Remove non-alpha characters:: define a function that returns a space if 
     auto copy_iter = std::copy_if(key_.begin(), key_.end(), key_.begin(), ::isalpha );
     key_.erase(copy_iter, key_.end() );
-    //std::cout << key_ << std::endl;
 
     // Change J -> I
     auto replace_func = [] (char x) {
@@ -56,37 +44,54 @@ void PlayfairCipher::setKey ( const std::string& key)
             out_letter = x;
         return out_letter;
     }; 
-    
     std::transform( key_.begin(), key_.end(), key_.begin(), replace_func );
-    std::cout << key_ << std::endl;
 
-    // Remove duplicated letters
+    // Remove duplicated letters -----------------------------------------------------------------|
 
     // Going to need a string of encountered letters. This will start blank 
     std::string used_letters {""};
 
-    // Will need to use the remove_if algorithm to remove the letter if it has already been encountered, e.g 
-    // Then define the encounter function as a lambda
-    // the iterator will go over the chars, so it should take the char, then loop over used_letters,
-    // checking if it's in there (use string::find?) yes - the lambda should return a boolean 
-    //  for ( size_t i {0}; i<key_.size(); ++i ) {
-    //    std::size_t found {key_.find(alphabet_[j])}; 
-    //  if (found!=std::string::npos) {  
-
+    // Define a lambda to check if the character is in used_letters, if not push_back & return false
     auto duplicate_func = [&used_letters] ( char x ) { 
-        //for ( size_t i {0}; i < used_letters.size(); ++i)  
-            std::size_t found {used_letters.find( x )};
-            if (found!=std::string::npos) 
-                return true;            // Returns true if the letter is already in used_letters 
-            else 
-                used_letters.push_back( x );
-                return false;
+        std::size_t found {used_letters.find( x )};
+        if (found!=std::string::npos) 
+            return true;            // Returns true if the letter is already in used_letters 
+        else 
+            used_letters.push_back( x );
+            return false;
     };
  
+    // remove_if iterates over key_, checks if duplicate_func is true, if so it "removes" the character
     auto rem_iter = std::remove_if( key_.begin(), key_.end(), duplicate_func);
     key_.erase(rem_iter, key_.end() );
     std::cout << key_ << std::endl;
-    // Store the coords of each letter
+    
+    // Store the coords of each letter in maps: Letter -> Coords & Coords -> Letter
+    // Typedef the maps you want to use & instantiate
+    using Str2CoordMap = std::map< char, std::vector<int> >;
+    Str2CoordMap mymap;
+   
+    using Coord2StrMap = std::map< std::vector<int>, char >;
+    Coord2StrMap myrevmap;
+   
+    int count {0};
+    // Loop over the key_ container, write down the coords & instantiate a pair, save to map. 
+    for ( auto letter : key_ ) {
+        std::vector<int> coord {count/5, count%5};
+        Str2CoordMap::value_type pair { letter, coord };
+        mymap.insert( pair );
+    
+        Coord2StrMap::value_type revpair { coord, letter };
+        myrevmap.insert( revpair );
+    
+        ++count;
+    } 
+
+    // Range-based loop to print the map out 
+    for ( auto p : mymap )
+    {
+        std::cout << p.first << ": [" << p.second[0] << "," << p.second[1] << "]." << std::endl;
+    }
 
     // Store the playfair cihper key map
 }
