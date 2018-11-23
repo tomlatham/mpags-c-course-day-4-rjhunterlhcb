@@ -90,10 +90,10 @@ void PlayfairCipher::setKey ( const std::string& key)
     } 
 
     // Range-based loop to print the map out 
-    for ( auto p : mymap )
+    /*for ( auto p : mymap )
     {
         std::cout << p.first << ": [" << p.second[0] << "," << p.second[1] << "]." << std::endl;
-    }
+    }*/
 
     // Store the playfair cihper key map
 }
@@ -114,10 +114,10 @@ std::string PlayfairCipher::applyCipher(const std::string& inputText, const Ciph
         return out_letter;
     }; 
     std::transform( inputText.begin(), inputText.end(), std::back_inserter(outputText), replace_func );
-
+    std::cout << outputText << std::endl;
     // If repeated chars in a digraph add an X or Q if XX & if the size of input is odd, add a trailing Z
-    std::string new_mess;
-
+    std::string new_mess {""};
+    //std::cout << outputText.size() << std::endl;
     size_t count{0};
     while( count < outputText.size() )
     {
@@ -142,8 +142,12 @@ std::string PlayfairCipher::applyCipher(const std::string& inputText, const Ciph
                     count += 2;
             }
     }
+    //std::cout << "After duplicate  testing:" << new_mess << std::endl;
     outputText = new_mess;
-    
+
+    std::string cipher_string {""};  
+    std::vector<int> new_coords1 {0,0}; 
+    std::vector<int> new_coords2 {0,0};
     // Loop over the input in Digraphs
     for (size_t j {0}; j<outputText.size(); j += 2) {
         // Get the coordinates of the digraph, set them equal to some x,y 
@@ -154,27 +158,50 @@ std::string PlayfairCipher::applyCipher(const std::string& inputText, const Ciph
         std::vector<int> coords1 { (*map_iter1).second[0], (*map_iter1).second[1]};    
         auto map_iter2 = mymap.find(outputText[j+1]);
         std::vector<int> coords2 { (*map_iter2).second[0], (*map_iter2).second[1]};    
-       // std::cout << outputText[j] << ": [" << coords1[0] << "," << coords1[1] << "]." << std::endl;
+        //std::cout << "Coordinates before the cipher" << std::endl;
+        //std::cout << outputText[j] << ": [" << coords1[0] << "," << coords1[1] << "]." << std::endl;
+        //std::cout << outputText[j+1] << ": [" << coords2[0] << "," << coords2[1] << "]." << std::endl;
         
         // If the first number is the same, have same row, so push_back the letters on the right 
         if (coords1[0] == coords2[0]) {
-            new_coords1 = {coords1[0], (coords1[1]+1) % 5 }; //modulo 5 to allow for wraparound 
+            new_coords1 = {coords1[0], (coords1[1]+1) % 5 }; //modulo 5 to allow for wraparound, wrapround on same row 
+            new_coords2 = {coords2[0], (coords2[1]+1) % 5 };
+        }   // if same column, second number is the same, push_back letters below 
+        else if (coords1[1] == coords2[1]) {
+            new_coords1 = { (coords1[0]+1) % 5, coords1[1] };
+            new_coords2 = { (coords2[0]+1) % 5, coords2[1] };
+        } // If they form a rectangle, replace with ones from corner on the same row
+        else {
+            // Don't need any modulo, there's no incrementation. 
+            new_coords1[0] = coords1[0];
+            new_coords2[0] = coords2[0];
+            new_coords1[1] = coords2[1];
+            new_coords2[1] = coords1[1]; 
+        }
 
-            // YOURE WORKING HERE. 
-        }   
-     
-    }
-    // - Find the coords in the grid for each digraph
-    // - Apply the rules to these coords to get 'new' coords
-    // - Find the letter associated with the new coords
-    // return the text   
+        // Find the letter associated with the new coordinates 
+        auto revMap_iter1 = myrevmap.find({new_coords1[0], new_coords1[1]});
+        auto revMap_iter2 = myrevmap.find({new_coords2[0], new_coords2[1]});
+        char new_let1 { (*revMap_iter1).second};
+        char new_let2 { (*revMap_iter2).second};
+        
+        // Print out the new coordinates & letter to check. 
+        //std::cout << " New digraph" << std::endl;
+        //std::cout << new_let1 << ": [" << new_coords1[0] << "," << new_coords1[1] << "]." << std::endl; 
+        //std::cout << new_let2 << ": [" << new_coords2[0] << "," << new_coords2[1] << "]." << std::endl; 
    
+        // Append the new characters to the new string 
+        cipher_string += new_let1;
+        cipher_string += new_let2;
+    }
+    // return the text   
+    //std::cout << cipher_string << std::endl;
     if (cipherMode == CipherMode::Encrypt) {  
-        //outputText = inputText;
+        outputText = cipher_string;
         return outputText;
     }
     else {
-        //std::cout << "Sorry, I haven't implemented the cipher yet" << std::endl;
+        std::cout << "Sorry, I haven't the decrypt yet" << std::endl;
         return inputText;
     }
 }
