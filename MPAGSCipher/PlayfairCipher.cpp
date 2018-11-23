@@ -11,10 +11,10 @@
 
 PlayfairCipher::PlayfairCipher( const std::string& key )
   : key_{""},
-   mymap {},
-   myrevmap {}
+   charLookup_{},
+   coordLookup_{}
 {
-      setKey(key);
+    setKey(key);
 }
 
 
@@ -29,9 +29,7 @@ void PlayfairCipher::setKey ( const std::string& key)
     }
 
     // Use std::transform with the ::toupper function to capitalize
-    std::string newKey {""};
-    std::transform( key_.begin(), key_.end(), std::back_inserter(newKey),  ::toupper );
-    key_ = newKey;
+    std::transform( key_.begin(), key_.end(), key_.begin(),  ::toupper );
 
     // Remove non-alpha characters:: define a function that returns a space if 
     auto copy_iter = std::copy_if(key_.begin(), key_.end(), key_.begin(), ::isalpha );
@@ -39,11 +37,10 @@ void PlayfairCipher::setKey ( const std::string& key)
 
     // Change J -> I
     auto replace_func = [] (char x) {
-        char out_letter {'x'};
-        if (x == 'J') 
+        char out_letter {x};
+        if (x == 'J') {
             out_letter = 'I'; 
-        else 
-            out_letter = x;
+        }
         return out_letter;
     }; 
     std::transform( key_.begin(), key_.end(), key_.begin(), replace_func );
@@ -55,12 +52,12 @@ void PlayfairCipher::setKey ( const std::string& key)
 
     // Define a lambda to check if the character is in used_letters, if not push_back & return false
     auto duplicate_func = [&used_letters] ( char x ) { 
-        std::size_t found {used_letters.find( x )};
-        if (found!=std::string::npos) 
+        if ( used_letters.find( x ) != std::string::npos) {
             return true;            // Returns true if the letter is already in used_letters 
-        else 
+        } else {
             used_letters.push_back( x );
             return false;
+        }
     };
  
     // remove_if iterates over key_, checks if duplicate_func is true, if so it "removes" the character
@@ -69,38 +66,25 @@ void PlayfairCipher::setKey ( const std::string& key)
    // std::cout << key_ << std::endl;
     
     // Store the coords of each letter in maps: Letter -> Coords & Coords -> Letter
-    // Typedef the maps you want to use & instantiate
-    /*using Str2CoordMap = std::map< char, std::vector<int> >;
-    Str2CoordMap mymap;
-   
-    using Coord2StrMap = std::map< std::vector<int>, char >;
-    Coord2StrMap myrevmap;
-   */
-    int count {0};
+    std::size_t count {0};
     // Loop over the key_ container, write down the coords & instantiate a pair, save to map. 
     for ( auto letter : key_ ) {
-        std::vector<int> coord {count/5, count%5};
-        Str2CoordMap::value_type pair { letter, coord };
-        mymap.insert( pair );
-    
-        Coord2StrMap::value_type revpair { coord, letter };
-        myrevmap.insert( revpair );
-    
+        PlayfairCoords coord {count/5, count%5};
+        charLookup_.insert( std::make_pair( letter, coord ) );
+        coordLookup_.insert( std::make_pair( coord, letter ) );
         ++count;
     } 
 
     // Range-based loop to print the map out 
-    /*for ( auto p : mymap )
+    /*for ( auto p : charLookup_ )
     {
-        std::cout << p.first << ": [" << p.second[0] << "," << p.second[1] << "]." << std::endl;
+        std::cout << p.first << ": [" << p.second.first << "," << p.second.second << "]." << std::endl;
     }*/
-
-    // Store the playfair cihper key map
 }
 
 std::string PlayfairCipher::applyCipher(const std::string& inputText, const CipherMode cipherMode) const 
 {
-    int shift{1};
+    std::size_t shift{1};
     
     // Set the encryption or decyption
     if (cipherMode == CipherMode::Encrypt) {  
@@ -115,19 +99,19 @@ std::string PlayfairCipher::applyCipher(const std::string& inputText, const Ciph
     
     // Change J → I
     auto replace_func = [] (char x) {
-        char out_letter {'x'};
-        if (x == 'J') 
+        char out_letter {x};
+        if (x == 'J') {
             out_letter = 'I'; 
-        else 
-            out_letter = x;
+        }
         return out_letter;
     }; 
     std::transform( inputText.begin(), inputText.end(), std::back_inserter(outputText), replace_func );
-    std::cout << outputText << std::endl;
+    //std::cout << outputText << std::endl;
+
     // If repeated chars in a digraph add an X or Q if XX & if the size of input is odd, add a trailing Z
     std::string new_mess {""};
     //std::cout << outputText.size() << std::endl;
-    size_t count{0};
+    std::size_t count{0};
     while( count < outputText.size() )
     {
             new_mess += outputText[count];
@@ -154,68 +138,58 @@ std::string PlayfairCipher::applyCipher(const std::string& inputText, const Ciph
     //std::cout << "After duplicate  testing:" << new_mess << std::endl;
     outputText = new_mess;
 
-    std::string cipher_string {""};  
-    std::vector<int> new_coords1 {0,0}; 
-    std::vector<int> new_coords2 {0,0};
+    PlayfairCoords new_coords1 {0,0}; 
+    PlayfairCoords new_coords2 {0,0};
     // Loop over the input in Digraphs
     for (size_t j {0}; j<outputText.size(); j += 2) {
         // Get the coordinates of the digraph, set them equal to some x,y 
         // If the second is the same, have same column, so push_back directly below
         
         // Get the coordinates in the map of the digraph
-        auto map_iter1 = mymap.find(outputText[j]);
-        std::vector<int> coords1 { (*map_iter1).second[0], (*map_iter1).second[1]};    
-        auto map_iter2 = mymap.find(outputText[j+1]);
-        std::vector<int> coords2 { (*map_iter2).second[0], (*map_iter2).second[1]};    
-        std::cout << "Coordinates before the cipher" << std::endl;
-        std::cout << outputText[j] << ": [" << coords1[0] << "," << coords1[1] << "]." << std::endl;
-        std::cout << outputText[j+1] << ": [" << coords2[0] << "," << coords2[1] << "]." << std::endl;
+        auto map_iter1 = charLookup_.find(outputText[j]);
+        auto map_iter2 = charLookup_.find(outputText[j+1]);
+        PlayfairCoords coords1 { (*map_iter1).second };    
+        PlayfairCoords coords2 { (*map_iter2).second };    
+
+        //std::cout << "Coordinates before the cipher" << std::endl;
+        //std::cout << outputText[j] << ": [" << coords1.first << "," << coords1.second << "]." << std::endl;
+        //std::cout << outputText[j+1] << ": [" << coords2.first << "," << coords2.second << "]." << std::endl;
         
         // If the first number is the same, have same row, so push_back the letters on the right 
-        if (coords1[0] == coords2[0]) {
-            new_coords1 = {coords1[0], (coords1[1]+shift) % 5 }; //modulo 5 to allow for wraparound, wrapround on same row 
-            new_coords2 = {coords2[0], (coords2[1]+shift) % 5 };
+        if (coords1.first == coords2.first) {
+            new_coords1 = {coords1.first, (coords1.second+shift) % 5 }; //modulo 5 to allow for wraparound, wrapround on same row 
+            new_coords2 = {coords2.first, (coords2.second+shift) % 5 };
         }   // if same column, second number is the same, push_back letters below 
-        else if (coords1[1] == coords2[1]) {
-            new_coords1 = { (coords1[0]+shift) % 5, coords1[1] };
-            new_coords2 = { (coords2[0]+shift) % 5, coords2[1] };
+        else if (coords1.second == coords2.second) {
+            new_coords1 = { (coords1.first+shift) % 5, coords1.second };
+            new_coords2 = { (coords2.first+shift) % 5, coords2.second };
         } // If they form a rectangle, replace with ones from corner on the same row
         else {
             // Don't need any modulo, there's no incrementation.This bit will also decrypt.  
-            new_coords1[0] = coords1[0];
-            new_coords2[0] = coords2[0];
-            new_coords1[1] = coords2[1];
-            new_coords2[1] = coords1[1]; 
+            new_coords1.first = coords1.first;
+            new_coords2.first = coords2.first;
+            new_coords1.second = coords2.second;
+            new_coords2.second = coords1.second; 
         }
 
         // Find the letter associated with the new coordinates 
-        auto revMap_iter1 = myrevmap.find({new_coords1[0], new_coords1[1]});
-        auto revMap_iter2 = myrevmap.find({new_coords2[0], new_coords2[1]});
-        char new_let1 { (*revMap_iter1).second};
-        char new_let2 { (*revMap_iter2).second};
+        auto revMap_iter1 = coordLookup_.find( new_coords1 );
+        auto revMap_iter2 = coordLookup_.find( new_coords2 );
+        char new_let1 { (*revMap_iter1).second };
+        char new_let2 { (*revMap_iter2).second };
         
         // Print out the new coordinates & letter to check. 
-        std::cout << " New digraph" << std::endl;
-        std::cout << new_let1 << ": [" << new_coords1[0] << "," << new_coords1[1] << "]." << std::endl; 
-        std::cout << new_let2 << ": [" << new_coords2[0] << "," << new_coords2[1] << "]." << std::endl; 
+        //std::cout << " New digraph" << std::endl;
+        //std::cout << new_let1 << ": [" << new_coords1.first << "," << new_coords1.second << "]." << std::endl; 
+        //std::cout << new_let2 << ": [" << new_coords2.first << "," << new_coords2.second << "]." << std::endl; 
    
         // Append the new characters to the new string 
-        cipher_string += new_let1;
-        cipher_string += new_let2;
+        outputText[j]   = new_let1;
+        outputText[j+1] = new_let2;
     }
+
     // return the text   
-    std::cout << cipher_string << std::endl;
-    /*if (cipherMode == CipherMode::Encrypt) {  
-        outputText = cipher_string;
-        return outputText;
-    }
-    else {
-        //std::cout << "Sorry, I haven't the decrypt yet" << std::endl;
-        //return inputText;
-    }*/
-    
-    outputText = cipher_string;
-    
+    //std::cout << outputText << std::endl;
     return outputText;
 }
 

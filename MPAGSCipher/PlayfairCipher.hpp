@@ -45,19 +45,20 @@ class PlayfairCipher {
         void setKey( const std::string& key);        
 
     private:
-        
+        /// The cipher key
         std::string key_ = {""};
-        using Str2CoordMap = std::map< char, std::vector<int> >;
-        Str2CoordMap mymap;
-   
-        using Coord2StrMap = std::map< std::vector<int>, char >;
-        Coord2StrMap myrevmap;
 
+        /// Define the type to represent the Playfair grid coordinates
+        using PlayfairCoords = std::pair<std::size_t,std::size_t>;
+
+        /// Lookup table from character to grid coordinate
+        std::map< char, PlayfairCoords > charLookup_;
+
+        /// Lookup table from grid coordinate to character
+        std::map< PlayfairCoords, char > coordLookup_;
+
+        /// The alphabet
         const std::vector<char> alphabet_ = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'};
-        const std::vector<char>::size_type alphabetSize_ = alphabet_.size();
+};
 
-
-
-    };
-  
 #endif

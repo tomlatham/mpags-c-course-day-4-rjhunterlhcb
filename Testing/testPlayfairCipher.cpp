@@ -1,13 +1,15 @@
-//! Unit testing for the Playfair Cipher class
+//! Unit Tests for MPAGSCipher CaesarCipher Class
 #define CATCH_CONFIG_MAIN
 #include "catch.hpp"
 
 #include "PlayfairCipher.hpp"
-/*
-TEST_CASE("Playfair key is made even", "[key-test]") {
-    PlayfairCipher pc ; 
-    const std::string test {"noteven"};
-    pc.applyCipher(test, CipherMode::Encrypt);
-    REQUIRE(  );   
 
-}*/
+TEST_CASE("Playfair Cipher encryption", "[playfair]") {
+  PlayfairCipher cc{"hello"};
+  REQUIRE( cc.applyCipher("BOBISSOMESORTOFJUNIORCOMPLEXXENOPHONEONEZEROTHING", CipherMode::Encrypt) == "FHIQXLTLKLTLSUFNPQPKETFENIOLVSWLTFIAFTLAKOWATEQOKPPA");
+}
+
+TEST_CASE("Playfair Cipher decryption", "[playfair]") {
+  PlayfairCipher cc{"hello"};
+  REQUIRE( cc.applyCipher("FHIQXLTLKLTLSUFNPQPKETFENIOLVSWLTFIAFTLAKOWATEQOKPPA", CipherMode::Decrypt) == "BOBISXSOMESORTOFIUNIORCOMPLEXQXENOPHONEONEZEROTHINGZ");
+}
