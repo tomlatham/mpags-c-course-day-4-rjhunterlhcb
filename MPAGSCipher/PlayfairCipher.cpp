@@ -100,7 +100,16 @@ void PlayfairCipher::setKey ( const std::string& key)
 
 std::string PlayfairCipher::applyCipher(const std::string& inputText, const CipherMode cipherMode) const 
 {
+    int shift{1};
     
+    // Set the encryption or decyption
+    if (cipherMode == CipherMode::Encrypt) {  
+        shift = 1;
+    }
+    else if (cipherMode == CipherMode::Decrypt) {
+        shift = 4;
+    }
+
     // Create the output string 
     std::string outputText {""};
     
@@ -158,21 +167,21 @@ std::string PlayfairCipher::applyCipher(const std::string& inputText, const Ciph
         std::vector<int> coords1 { (*map_iter1).second[0], (*map_iter1).second[1]};    
         auto map_iter2 = mymap.find(outputText[j+1]);
         std::vector<int> coords2 { (*map_iter2).second[0], (*map_iter2).second[1]};    
-        //std::cout << "Coordinates before the cipher" << std::endl;
-        //std::cout << outputText[j] << ": [" << coords1[0] << "," << coords1[1] << "]." << std::endl;
-        //std::cout << outputText[j+1] << ": [" << coords2[0] << "," << coords2[1] << "]." << std::endl;
+        std::cout << "Coordinates before the cipher" << std::endl;
+        std::cout << outputText[j] << ": [" << coords1[0] << "," << coords1[1] << "]." << std::endl;
+        std::cout << outputText[j+1] << ": [" << coords2[0] << "," << coords2[1] << "]." << std::endl;
         
         // If the first number is the same, have same row, so push_back the letters on the right 
         if (coords1[0] == coords2[0]) {
-            new_coords1 = {coords1[0], (coords1[1]+1) % 5 }; //modulo 5 to allow for wraparound, wrapround on same row 
-            new_coords2 = {coords2[0], (coords2[1]+1) % 5 };
+            new_coords1 = {coords1[0], (coords1[1]+shift) % 5 }; //modulo 5 to allow for wraparound, wrapround on same row 
+            new_coords2 = {coords2[0], (coords2[1]+shift) % 5 };
         }   // if same column, second number is the same, push_back letters below 
         else if (coords1[1] == coords2[1]) {
-            new_coords1 = { (coords1[0]+1) % 5, coords1[1] };
-            new_coords2 = { (coords2[0]+1) % 5, coords2[1] };
+            new_coords1 = { (coords1[0]+shift) % 5, coords1[1] };
+            new_coords2 = { (coords2[0]+shift) % 5, coords2[1] };
         } // If they form a rectangle, replace with ones from corner on the same row
         else {
-            // Don't need any modulo, there's no incrementation. 
+            // Don't need any modulo, there's no incrementation.This bit will also decrypt.  
             new_coords1[0] = coords1[0];
             new_coords2[0] = coords2[0];
             new_coords1[1] = coords2[1];
@@ -186,23 +195,27 @@ std::string PlayfairCipher::applyCipher(const std::string& inputText, const Ciph
         char new_let2 { (*revMap_iter2).second};
         
         // Print out the new coordinates & letter to check. 
-        //std::cout << " New digraph" << std::endl;
-        //std::cout << new_let1 << ": [" << new_coords1[0] << "," << new_coords1[1] << "]." << std::endl; 
-        //std::cout << new_let2 << ": [" << new_coords2[0] << "," << new_coords2[1] << "]." << std::endl; 
+        std::cout << " New digraph" << std::endl;
+        std::cout << new_let1 << ": [" << new_coords1[0] << "," << new_coords1[1] << "]." << std::endl; 
+        std::cout << new_let2 << ": [" << new_coords2[0] << "," << new_coords2[1] << "]." << std::endl; 
    
         // Append the new characters to the new string 
         cipher_string += new_let1;
         cipher_string += new_let2;
     }
     // return the text   
-    //std::cout << cipher_string << std::endl;
-    if (cipherMode == CipherMode::Encrypt) {  
+    std::cout << cipher_string << std::endl;
+    /*if (cipherMode == CipherMode::Encrypt) {  
         outputText = cipher_string;
         return outputText;
     }
     else {
-        std::cout << "Sorry, I haven't the decrypt yet" << std::endl;
-        return inputText;
-    }
+        //std::cout << "Sorry, I haven't the decrypt yet" << std::endl;
+        //return inputText;
+    }*/
+    
+    outputText = cipher_string;
+    
+    return outputText;
 }
 
